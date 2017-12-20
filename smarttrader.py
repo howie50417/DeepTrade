@@ -173,13 +173,27 @@ def train(trader, train_set, val_set, train_steps=10000, batch_size=32, keep_rat
             if i % VERBOSE_STEP == 0:
                 hint = None
                 if i % VALIDATION_STEP == 0:
-                    val_loss, val_avg_pos = sess.run([trader.loss, trader.avg_position],
+                    val_loss, val_avg_pos, pred = sess.run([trader.loss, trader.avg_position, trader.position],
                                            feed_dict={trader.x: val_features, trader.y: val_labels,
                                            trader.is_training: False, trader.keep_rate: 1.})
                     hint = 'Average Train Loss at step {}: {:.7f} Average position {:.7f}, Validation Loss: {:.7f} Average Position: {:.7f}'.format(i, loss, avg_pos, val_loss, val_avg_pos)
                     if val_loss < min_validation_loss:
                         min_validation_loss = val_loss
                         saver.save(sess, "./checkpoint/best_model", i)
+                    y_1 = 0
+                    y_2 = 0
+                    p_1 = 0
+                    p_2 = 0
+                    for i in range(len(val_labels)):
+                        if val_labels[i][0] > 0:
+                            y_1 += 1
+                            if pred[i][0] > val_avg_pos:
+                                p_1 += 1
+                        else:
+                            y_2 += 1
+                            if pred[i][0] > val_avg_pos:
+                                p_2 += 1
+                    print(str(y_1) + "\t" + str(y_2) + "\t" + str(float(y_1)/(y_1+y_2)) + "\t" + str(p_1) + "\t" + str(p_2) + "\t" + str(float(p_1)/(p_1+p_2)))
                 else:
                     hint = 'Average loss at step {}: {:.7f} Average position {:.7f}'.format(i, loss, avg_pos)
                 print(hint)
